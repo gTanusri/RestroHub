@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Clock,
   ChefHat,
@@ -6,8 +6,14 @@ import {
   RefreshCw,
   AlertCircle
 } from 'lucide-react';
-import api from "@services/common/api";
 import { useAdminTheme } from '@context/AdminThemeContext';
+
+const FALLBACK_ORDERS = [
+  { id: 123, table: 4, amount: 450, status: 'cooking', items: '2x Paneer, 1x Lassi' },
+  { id: 124, table: 7, amount: 320, status: 'ready', items: '1x Biryani, 2x Roti' },
+  { id: 125, table: 2, amount: 780, status: 'cooking', items: '3x Thali' },
+  { id: 126, table: 9, amount: 190, status: 'pending', items: '2x Lassi' },
+];
 
 // ============================================
 // STATUS BADGE (Private to this file)
@@ -83,30 +89,9 @@ const LiveOrders = () => {
   const [refreshing, setRefreshing] = useState(false);
   const { isDark } = useAdminTheme();
 
-  // ------------------------------------
-  // FALLBACK DATA
-  // ------------------------------------
-  const fallbackOrders = [
-    { id: 123, table: 4, amount: 450, status: 'cooking', items: '2x Paneer, 1x Lassi' },
-    { id: 124, table: 7, amount: 320, status: 'ready', items: '1x Biryani, 2x Roti' },
-    { id: 125, table: 2, amount: 780, status: 'cooking', items: '3x Thali' },
-    { id: 126, table: 9, amount: 190, status: 'pending', items: '2x Lassi' },
-  ];
-
-  // ------------------------------------
-  // FETCH DATA
-  // ------------------------------------
-  useEffect(() => {
-    fetchOrders();
-
-    // 🔌 UNCOMMENT: Auto-refresh every 30 seconds
-    // const interval = setInterval(fetchOrders, 30000);
-    // return () => clearInterval(interval);
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async ({ initial = false } = {}) => {
     try {
-      if (!loading) setRefreshing(true);
+      if (!initial) setRefreshing(true);
       setError(null);
 
       // 🔌 UNCOMMENT WHEN API READY
@@ -115,17 +100,28 @@ const LiveOrders = () => {
 
       // 🎭 MOCK
       await new Promise(resolve => setTimeout(resolve, 600));
-      setOrders(fallbackOrders);
+      setOrders(FALLBACK_ORDERS);
 
     } catch (err) {
       console.error('Failed to fetch orders:', err);
       setError('Failed to load orders');
-      setOrders(fallbackOrders);
+      setOrders(FALLBACK_ORDERS);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
+
+  // ------------------------------------
+  // FETCH DATA
+  // ------------------------------------
+  useEffect(() => {
+    fetchOrders({ initial: true });
+
+    // 🔌 UNCOMMENT: Auto-refresh every 30 seconds
+    // const interval = setInterval(fetchOrders, 30000);
+    // return () => clearInterval(interval);
+  }, [fetchOrders]);
 
   // ------------------------------------
   // RENDER

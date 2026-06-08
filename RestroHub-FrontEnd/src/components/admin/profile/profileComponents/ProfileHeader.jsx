@@ -1,13 +1,9 @@
-import { useState } from 'react';
 import {
   Camera,
   MapPin,
   Mail,
-  Phone,
   Calendar,
   Edit2,
-  Loader2,
-  Check,
 } from 'lucide-react';
 
 const ProfileHeader = ({ profile, onEditAvatar }) => {

@@ -4,14 +4,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { GoogleLogin } from "@react-oauth/google";
 import api from "@services/common/api";
+import { persistAuthSession } from "@services/common/authStorage";
 import { useTheme } from "@context/ThemeContext";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8181/restroly";
 
 const validationSchema = Yup.object({
     username: Yup.string().required("Email or username is required"),
@@ -166,13 +163,7 @@ const Login = () => {
         const result = res.data;
 
         if (result.success) {
-          const { accessToken, refreshToken, roles } = result.data;
-
-          localStorage.setItem("accessToken", accessToken);
-          localStorage.setItem("refreshToken", refreshToken);
-          localStorage.setItem("roles", JSON.stringify(roles));
-
-          axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+          persistAuthSession(result.data);
 
           toast.success("Login successful!");
 
@@ -201,13 +192,7 @@ const handleGoogleLogin = async (credentialResponse) => {
     const result = res.data;
 
     if (result.success) {
-      const { accessToken, refreshToken, roles } = result.data;
-
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("roles", JSON.stringify(roles));
-
-      axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+      persistAuthSession(result.data);
 
       toast.success("Google login successful!");
 
@@ -404,8 +389,6 @@ const handleGoogleLogin = async (credentialResponse) => {
     toast.error("Google Login Failed");
   }}
 />
-```
-
 
 
                 {/* Sign-up link */}

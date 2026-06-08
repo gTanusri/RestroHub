@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   IndianRupee,
   ShoppingCart,
@@ -10,19 +10,66 @@ import {
 import api from "@services/common/api";
 import { useAdminTheme } from '@context/AdminThemeContext';
 
-// ============================================
-// STAT CARD (Private to this file)
-// ============================================
-const StatCard = ({ title, value, change, positive, subtitle, icon: Icon, color, pulse, progress }) => {
+const FALLBACK_STATS = [
+  {
+    title: "Today's Revenue",
+    value: 'Rs.45,230',
+    change: '+24%',
+    positive: true,
+    icon: IndianRupee,
+    color: 'green',
+  },
+  {
+    title: 'Live Orders',
+    value: '12',
+    subtitle: 'active',
+    icon: ShoppingCart,
+    color: 'orange',
+    pulse: true,
+  },
+  {
+    title: 'WhatsApp Messages',
+    value: '156/1000',
+    progress: 15.6,
+    icon: MessageSquare,
+    color: 'emerald',
+  },
+  {
+    title: 'UPI Success',
+    value: '89%',
+    subtitle: '(78/89)',
+    icon: CreditCard,
+    color: 'purple',
+  },
+];
+
+const ICON_MAP = {
+  revenue: IndianRupee,
+  orders: ShoppingCart,
+  messages: MessageSquare,
+  payments: CreditCard,
+};
+
+const StatCard = ({
+  title,
+  value,
+  change,
+  positive,
+  subtitle,
+  icon: Icon,
+  color,
+  pulse,
+  progress,
+}) => {
   const { isDark } = useAdminTheme();
 
   const colorClasses = {
-    green:   isDark ? 'bg-green-900/40 text-green-400'   : 'bg-green-100 text-green-600',
-    orange:  isDark ? 'bg-orange-900/40 text-orange-400'  : 'bg-orange-100 text-orange-600',
-    emerald: isDark ? 'bg-emerald-900/40 text-emerald-400': 'bg-emerald-100 text-emerald-600',
-    purple:  isDark ? 'bg-purple-900/40 text-purple-400'  : 'bg-purple-100 text-purple-600',
-    blue:    isDark ? 'bg-blue-900/40 text-blue-400'     : 'bg-blue-100 text-blue-600',
-    red:     isDark ? 'bg-red-900/40 text-red-400'       : 'bg-red-100 text-red-600',
+    green: isDark ? 'bg-green-900/40 text-green-400' : 'bg-green-100 text-green-600',
+    orange: isDark ? 'bg-orange-900/40 text-orange-400' : 'bg-orange-100 text-orange-600',
+    emerald: isDark ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-600',
+    purple: isDark ? 'bg-purple-900/40 text-purple-400' : 'bg-purple-100 text-purple-600',
+    blue: isDark ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-blue-600',
+    red: isDark ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-600',
   };
 
   return (
@@ -65,11 +112,9 @@ const StatCard = ({ title, value, change, positive, subtitle, icon: Icon, color,
   );
 };
 
-// ============================================
-// SKELETON LOADER (Private to this file)
-// ============================================
 const StatCardSkeleton = () => {
   const { isDark } = useAdminTheme();
+
   return (
     <div className={`rounded-2xl p-6 shadow-sm border animate-pulse ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
       <div className="flex items-center justify-between mb-4">
@@ -82,106 +127,41 @@ const StatCardSkeleton = () => {
   );
 };
 
-// ============================================
-// MAIN COMPONENT (Exported)
-// ============================================
 const StatsSection = () => {
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ------------------------------------
-  // FALLBACK DATA (used when API fails)
-  // ------------------------------------
-  const fallbackStats = [
-    {
-      title: "Today's Revenue",
-      value: '₹45,230',
-      change: '+24%',
-      positive: true,
-      icon: IndianRupee,
-      color: 'green',
-    },
-    {
-      title: 'Live Orders',
-      value: '12',
-      subtitle: 'active',
-      icon: ShoppingCart,
-      color: 'orange',
-      pulse: true,
-    },
-    {
-      title: 'WhatsApp Messages',
-      value: '156/1000',
-      progress: 15.6,
-      icon: MessageSquare,
-      color: 'emerald',
-    },
-    {
-      title: 'UPI Success',
-      value: '89%',
-      subtitle: '(78/89)',
-      icon: CreditCard,
-      color: 'purple',
-    },
-  ];
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  // ------------------------------------
-  // ICON MAPPING (API returns string, we need component)
-  // ------------------------------------
-  const iconMap = {
-    revenue: IndianRupee,
-    orders: ShoppingCart,
-    messages: MessageSquare,
-    payments: CreditCard,
-  };
+      const response = await api.get("/secure/api/v1/dashboard/statistics");
+      const apiStats = response.data.map((stat) => ({
+        ...stat,
+        icon: ICON_MAP[stat.iconKey] || IndianRupee,
+      }));
 
-  // ------------------------------------
-  // FETCH DATA
-  // ------------------------------------
-  useEffect(() => {
-    fetchStats();
+      setStats(apiStats);
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+      setError("Failed to load stats");
+      setStats(FALLBACK_STATS);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const fetchStats = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-
-    const response = await api.get("/secure/api/v1/dashboard/statistics");
-
-
-    const apiStats = response.data.map(stat => ({
-      ...stat,
-      icon: iconMap[stat.iconKey] || IndianRupee,
-    }));
-
-    setStats(apiStats);
-
-  } catch (err) {
-    console.error("Failed to fetch stats:", err);
-    setError("Failed to load stats");
-    setStats(fallbackStats);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // ------------------------------------
-  // REFRESH (can be called from parent)
-  // ------------------------------------
-  const refresh = () => {
+  useEffect(() => {
     fetchStats();
-  };
+  }, [fetchStats]);
 
-  // ------------------------------------
-  // RENDER
-  // ------------------------------------
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {[1, 2, 3, 4].map(i => (
-          <StatCardSkeleton key={i} />
+        {[1, 2, 3, 4].map((item) => (
+          <StatCardSkeleton key={item} />
         ))}
       </div>
     );
@@ -192,7 +172,7 @@ const StatsSection = () => {
       <div className="bg-red-50 rounded-2xl p-6 border border-red-100 text-center">
         <p className="text-red-600 mb-2">{error}</p>
         <button
-          onClick={refresh}
+          onClick={fetchStats}
           className="text-sm text-red-700 underline hover:no-underline"
         >
           Try Again
@@ -204,7 +184,7 @@ const StatsSection = () => {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat, index) => (
-        <StatCard key={index} {...stat} />
+        <StatCard key={stat.id || stat.title || index} {...stat} />
       ))}
     </div>
   );

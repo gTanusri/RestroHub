@@ -1,11 +1,56 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, AlertCircle, ClipboardList } from 'lucide-react';
 import OrderCard from './OrderCard';
-import api from "@services/common/api";
 
-// ============================================
-// SKELETON (Private)
-// ============================================
+const FALLBACK_ORDERS = [
+  {
+    id: 123,
+    table: 4,
+    amount: 450,
+    status: 'cooking',
+    customer: 'John Doe',
+    phone: '9876543210',
+    items: [
+      { name: 'Paneer Tikka', qty: 2, price: 180 },
+      { name: 'Lassi', qty: 1, price: 90 },
+    ],
+    time: '5 mins ago',
+  },
+  {
+    id: 124,
+    table: 7,
+    amount: 320,
+    status: 'ready',
+    customer: 'Priya Sharma',
+    phone: '9876543211',
+    items: [
+      { name: 'Biryani', qty: 1, price: 220 },
+      { name: 'Roti', qty: 2, price: 50 },
+    ],
+    time: '12 mins ago',
+  },
+  {
+    id: 125,
+    table: 2,
+    amount: 780,
+    status: 'pending',
+    customer: 'Amit Kumar',
+    phone: '9876543212',
+    items: [{ name: 'Special Thali', qty: 3, price: 260 }],
+    time: '2 mins ago',
+  },
+  {
+    id: 126,
+    table: 9,
+    amount: 190,
+    status: 'billed',
+    customer: 'Sara Khan',
+    phone: '9876543213',
+    items: [{ name: 'Sweet Lassi', qty: 2, price: 95 }],
+    time: '25 mins ago',
+  },
+];
+
 const OrderCardSkeleton = () => (
   <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 animate-pulse">
     <div className="flex items-start justify-between mb-4">
@@ -45,141 +90,77 @@ const OrderCardSkeleton = () => (
   </div>
 );
 
-// ============================================
-// MAIN COMPONENT
-// ============================================
 const OrdersGrid = ({ activeFilter, searchQuery, onOrdersChange }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Sync orders up to parent so OrderFilters gets real counts
-  const syncOrders = (updated) => {
+  const syncOrders = useCallback((updated) => {
     setOrders(updated);
     onOrdersChange?.(updated);
-  };
+  }, [onOrdersChange]);
 
-  // ------------------------------------
-  // FALLBACK DATA
-  // ------------------------------------
-  const fallbackOrders = [
-    {
-      id: 123,
-      table: 4,
-      amount: 450,
-      status: 'cooking',
-      customer: 'John Doe',
-      phone: '9876543210',
-      items: [
-        { name: 'Paneer Tikka', qty: 2, price: 180 },
-        { name: 'Lassi', qty: 1, price: 90 },
-      ],
-      time: '5 mins ago',
-    },
-    {
-      id: 124,
-      table: 7,
-      amount: 320,
-      status: 'ready',
-      customer: 'Priya Sharma',
-      phone: '9876543211',
-      items: [
-        { name: 'Biryani', qty: 1, price: 220 },
-        { name: 'Roti', qty: 2, price: 50 },
-      ],
-      time: '12 mins ago',
-    },
-    {
-      id: 125,
-      table: 2,
-      amount: 780,
-      status: 'pending',
-      customer: 'Amit Kumar',
-      phone: '9876543212',
-      items: [{ name: 'Special Thali', qty: 3, price: 260 }],
-      time: '2 mins ago',
-    },
-    {
-      id: 126,
-      table: 9,
-      amount: 190,
-      status: 'billed',
-      customer: 'Sara Khan',
-      phone: '9876543213',
-      items: [{ name: 'Sweet Lassi', qty: 2, price: 95 }],
-      time: '25 mins ago',
-    },
-  ];
-
-  // ------------------------------------
-  // FETCH
-  // ------------------------------------
-  useEffect(() => {
-    fetchOrders();
-
-    // 🔌 UNCOMMENT: Auto-refresh every 30 seconds
-    // const interval = setInterval(fetchOrders, 30000);
-    // return () => clearInterval(interval);
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async ({ initial = false } = {}) => {
     try {
-      if (!loading) setRefreshing(true);
+      if (!initial) setRefreshing(true);
       setError(null);
 
-      // 🔌 UNCOMMENT WHEN API READY
+      // Uncomment when the orders endpoint is ready.
       // const response = await api.get('/api/orders');
-      // setOrders(response.data);
+      // syncOrders(response.data);
 
-      // 🎭 MOCK
       await new Promise((resolve) => setTimeout(resolve, 700));
-      syncOrders(fallbackOrders);
+      syncOrders(FALLBACK_ORDERS);
     } catch (err) {
       console.error('Failed to fetch orders:', err);
       setError('Failed to load orders');
-      syncOrders(fallbackOrders);
+      syncOrders(FALLBACK_ORDERS);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [syncOrders]);
 
-  // ------------------------------------
-  // HANDLERS
-  // ------------------------------------
+  useEffect(() => {
+    fetchOrders({ initial: true });
+
+    // Uncomment when the orders endpoint is ready.
+    // const interval = setInterval(fetchOrders, 30000);
+    // return () => clearInterval(interval);
+  }, [fetchOrders]);
+
   const handleStatusUpdate = (orderId, newStatus) => {
-    if (newStatus === 'complete') {
-      syncOrders(orders.filter((o) => o.id !== orderId));
-    } else {
-      syncOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
-    }
+    const updatedOrders = newStatus === 'complete'
+      ? orders.filter((order) => order.id !== orderId)
+      : orders.map((order) => (
+          order.id === orderId ? { ...order, status: newStatus } : order
+        ));
+
+    syncOrders(updatedOrders);
   };
 
   const query = searchQuery.trim().toLowerCase();
-
   const filteredOrders = orders
-    .filter((o) => activeFilter === 'all' || o.status === activeFilter)
-    .filter((o) => {
+    .filter((order) => activeFilter === 'all' || order.status === activeFilter)
+    .filter((order) => {
       if (!query) return true;
+
       return (
-        o.id.toString().includes(query) ||
-        o.customer.toLowerCase().includes(query) ||
-        o.table.toString().includes(query) ||
-        o.status.toLowerCase().includes(query) ||
-        o.phone.includes(query) ||
-        o.items.some((item) => item.name.toLowerCase().includes(query))
+        order.id.toString().includes(query) ||
+        order.customer.toLowerCase().includes(query) ||
+        order.table.toString().includes(query) ||
+        order.status.toLowerCase().includes(query) ||
+        order.phone.includes(query) ||
+        order.items.some((item) => item.name.toLowerCase().includes(query))
       );
     });
 
-  // ------------------------------------
-  // RENDER
-  // ------------------------------------
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <OrderCardSkeleton key={i} />
+        {[1, 2, 3, 4, 5, 6].map((item) => (
+          <OrderCardSkeleton key={item} />
         ))}
       </div>
     );
@@ -219,7 +200,6 @@ const OrdersGrid = ({ activeFilter, searchQuery, onOrdersChange }) => {
 
   return (
     <div>
-      {/* Refresh indicator */}
       {refreshing && (
         <div className="flex items-center gap-2 mb-4 text-sm text-blue-600">
           <RefreshCw className="w-4 h-4 animate-spin" />
@@ -227,7 +207,6 @@ const OrdersGrid = ({ activeFilter, searchQuery, onOrdersChange }) => {
         </div>
       )}
 
-      {/* Orders Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredOrders.map((order) => (
           <OrderCard
@@ -238,7 +217,6 @@ const OrdersGrid = ({ activeFilter, searchQuery, onOrdersChange }) => {
         ))}
       </div>
 
-      {/* Results Count */}
       <div className="mt-4 text-center">
         <p className="text-sm text-gray-500">
           Showing {filteredOrders.length} of {orders.length} orders
