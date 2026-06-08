@@ -27,20 +27,19 @@ const Sidebar = ({ open, setOpen, collapsed, setCollapsed }) => {
     marketing: false,
   });
 
-  // Auto-expand active parent on mount
+  // Auto-expand active parent when the route changes.
   useEffect(() => {
-    if (location.pathname.startsWith('/admin/store')) {
-      setExpandedMenus((prev) => ({ ...prev, store: true }));
-    }
-    if (location.pathname.startsWith('/admin/marketing')) {
-      setExpandedMenus((prev) => ({ ...prev, marketing: true }));
-    }
-  }, []);
+    setExpandedMenus((prev) => ({
+      ...prev,
+      store: prev.store || location.pathname.startsWith('/admin/store'),
+      marketing: prev.marketing || location.pathname.startsWith('/admin/marketing'),
+    }));
+  }, [location.pathname]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
     setOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, setOpen]);
 
   const toggleMenu = (menu) => {
     if (collapsed) {

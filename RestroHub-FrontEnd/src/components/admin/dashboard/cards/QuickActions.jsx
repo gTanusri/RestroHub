@@ -7,7 +7,6 @@ import {
   Download,
   Loader2
 } from 'lucide-react';
-import api from "@services/common/api";
 import { useAdminTheme } from '@context/AdminThemeContext';
 // import { useNavigate } from 'react-router-dom';  // if using react-router
 

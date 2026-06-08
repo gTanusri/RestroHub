@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import {
   AreaChart,
@@ -9,8 +9,17 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import api from "@services/common/api";
 import { useAdminTheme } from '@context/AdminThemeContext';
+
+const FALLBACK_REVENUE_DATA = [
+  { day: '1', revenue: 24000 },
+  { day: '5', revenue: 32000 },
+  { day: '10', revenue: 28000 },
+  { day: '15', revenue: 45000 },
+  { day: '20', revenue: 38000 },
+  { day: '25', revenue: 52000 },
+  { day: '30', revenue: 45230 },
+];
 
 // ============================================
 // MAIN COMPONENT (Exported)
@@ -21,27 +30,7 @@ const RevenueChart = () => {
   const [error, setError] = useState(null);
   const { isDark } = useAdminTheme();
 
-  // ------------------------------------
-  // FALLBACK DATA
-  // ------------------------------------
-  const fallbackData = [
-    { day: '1', revenue: 24000 },
-    { day: '5', revenue: 32000 },
-    { day: '10', revenue: 28000 },
-    { day: '15', revenue: 45000 },
-    { day: '20', revenue: 38000 },
-    { day: '25', revenue: 52000 },
-    { day: '30', revenue: 45230 },
-  ];
-
-  // ------------------------------------
-  // FETCH DATA
-  // ------------------------------------
-  useEffect(() => {
-    fetchRevenue();
-  }, []);
-
-  const fetchRevenue = async () => {
+  const fetchRevenue = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -52,16 +41,23 @@ const RevenueChart = () => {
 
       // 🎭 MOCK
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setData(fallbackData);
+      setData(FALLBACK_REVENUE_DATA);
 
     } catch (err) {
       console.error('Failed to fetch revenue:', err);
       setError('Failed to load chart');
-      setData(fallbackData);
+      setData(FALLBACK_REVENUE_DATA);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // ------------------------------------
+  // FETCH DATA
+  // ------------------------------------
+  useEffect(() => {
+    fetchRevenue();
+  }, [fetchRevenue]);
 
   // ------------------------------------
   // RENDER
