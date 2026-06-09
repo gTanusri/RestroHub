@@ -13,6 +13,7 @@ import Login from '../pages/public/Login';
 import Register from '../pages/public/Register';
 import ForgotPassword from '../pages/public/ForgotPassword';
 import PrivacyPolicy from '../pages/public/PrivacyPolicy';
+import Unauthorized from '../pages/public/Unauthorized';
 
 // Customer Pages
 import RestaurantMenu from '../pages/customer/RestaurantMenu';
@@ -28,6 +29,7 @@ import QRDisplay from '@components/admin/marketing/qr/QRDisplay';
 import UPILinks from '@components/admin/upi/UPILinks';
 import KitchenDisplaySystem from '@components/admin/kds/KitchenDisplaySystem';
 import Profile from '@components/admin/profile/Profile';
+import SubscriptionManagement from '@components/admin/subscriptions/SubscriptionManagement';
 
 const AppRoutes = () => {
   return (
@@ -39,6 +41,7 @@ const AppRoutes = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 
       {/* ========== CUSTOMER ROUTES ========== */}
@@ -64,6 +67,14 @@ const AppRoutes = () => {
         <Route path="marketing/website" element={<Website />} />
         <Route path="marketing/qr-display" element={<QRDisplay />} />
         <Route path="upi-links" element={<UPILinks />} />
+        <Route
+          path="subscriptions"
+          element={
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+              <SubscriptionManagement />
+            </ProtectedRoute>
+          }
+        />
         <Route path="kds" element={<KitchenDisplaySystem />} />
         <Route path="profile" element={<Profile />} />
       </Route>
