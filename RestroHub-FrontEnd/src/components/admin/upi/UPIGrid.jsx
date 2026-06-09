@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, AlertCircle, CreditCard } from 'lucide-react';
 import UPICard from './UPICard';
+import api from '@services/common/api';
 
-// ============================================
-// SKELETON
-// ============================================
 const UPISkeleton = () => (
   <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white animate-pulse">
-    {/* Header */}
     <div className="border-b border-gray-100 px-4 py-4 sm:px-6 sm:py-5">
       <div className="flex items-start gap-3">
         <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-100 sm:h-12 sm:w-12" />
@@ -18,14 +15,12 @@ const UPISkeleton = () => (
         <div className="h-9 w-9 rounded-lg bg-gray-100" />
       </div>
     </div>
-    {/* Body */}
     <div className="px-4 py-4 sm:px-6 sm:py-5">
       <div className="grid grid-cols-2 gap-3">
         <div className="h-20 rounded-xl bg-gray-100" />
         <div className="h-20 rounded-xl bg-gray-100" />
       </div>
     </div>
-    {/* Footer */}
     <div className="border-t border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
       <div className="flex gap-2">
         <div className="h-10 flex-1 rounded-lg bg-gray-100" />
@@ -36,16 +31,22 @@ const UPISkeleton = () => (
   </div>
 );
 
-// ============================================
-// MAIN
-// ============================================
-const UPIGrid = ({ onTest, onCountChange }) => {
+const normalizeLink = (link) => ({
+  id: link.id,
+  name: link.name,
+  upiId: link.upiId,
+  isDefault: Boolean(link.defaultLink),
+  transactions: link.transactions || 0,
+  revenue: Number(link.revenue || 0),
+  paymentUrl: link.paymentUrl,
+});
+
+const UPIGrid = ({ onTest, onCountChange, refreshKey }) => {
   const [upiLinks, setUpiLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
-  // Fallback
   const fallbackLinks = [
     {
       id: 1, name: 'Main Account', upiId: 'restaurant@paytm',
@@ -59,50 +60,51 @@ const UPIGrid = ({ onTest, onCountChange }) => {
 
   useEffect(() => {
     fetchLinks();
-  }, []);
+  }, [refreshKey]);
 
   const fetchLinks = async () => {
     try {
       setLoading(true);
       setError(null);
-      // 🔌 const response = await api.get('/api/upi-links');
-      // setUpiLinks(response.data);
-      await new Promise((r) => setTimeout(r, 600));
-      setUpiLinks(fallbackLinks);
-      onCountChange?.(fallbackLinks.length);
+      const response = await api.get('/secure/api/v1/upi-links');
+      const links = response.data.map(normalizeLink);
+      setUpiLinks(links);
+      onCountChange?.(links.length);
     } catch (err) {
       console.error('Fetch failed:', err);
       setError('Failed to load UPI links');
       setUpiLinks(fallbackLinks);
+      onCountChange?.(fallbackLinks.length);
     } finally {
       setLoading(false);
     }
   };
 
-  // ------------------------------------
-  // HANDLERS
-  // ------------------------------------
   const handleCopy = (upiId, id) => {
     navigator.clipboard.writeText(upiId);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleSetDefault = (id) => {
-    setUpiLinks((prev) =>
-      prev.map((link) => ({ ...link, isDefault: link.id === id }))
-    );
+  const handleSetDefault = async (id) => {
+    const response = await api.put(`/secure/api/v1/upi-links/${id}/default`);
+    const updated = normalizeLink(response.data);
+    setUpiLinks((prev) => prev.map((link) => ({
+      ...link,
+      isDefault: link.id === updated.id,
+      ...(link.id === updated.id ? updated : {}),
+    })));
   };
 
-  const handleDelete = (id) => {
-    setUpiLinks((prev) => prev.filter((link) => link.id !== id));
+  const handleDelete = async (id) => {
+    await api.delete(`/secure/api/v1/upi-links/${id}`);
+    setUpiLinks((prev) => {
+      const next = prev.filter((link) => link.id !== id);
+      onCountChange?.(next.length);
+      return next;
+    });
   };
 
-  // ------------------------------------
-  // RENDER
-  // ------------------------------------
-
-  // Loading
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
@@ -113,7 +115,6 @@ const UPIGrid = ({ onTest, onCountChange }) => {
     );
   }
 
-  // Error
   if (error && upiLinks.length === 0) {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center sm:py-16">
@@ -134,7 +135,6 @@ const UPIGrid = ({ onTest, onCountChange }) => {
     );
   }
 
-  // Empty
   if (upiLinks.length === 0) {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center sm:py-16">
@@ -147,7 +147,6 @@ const UPIGrid = ({ onTest, onCountChange }) => {
     );
   }
 
-  // Grid
   return (
     <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
       {upiLinks.map((link) => (

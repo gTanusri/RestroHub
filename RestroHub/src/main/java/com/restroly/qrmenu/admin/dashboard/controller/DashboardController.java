@@ -1,6 +1,7 @@
 package com.restroly.qrmenu.admin.dashboard.controller;
 
 import com.restroly.qrmenu.admin.dashboard.dto.DashboardStatDTO;
+import com.restroly.qrmenu.admin.dashboard.dto.RevenueTrendDTO;
 import com.restroly.qrmenu.admin.dashboard.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,5 +19,12 @@ public class DashboardController {
     @GetMapping("/statistics")
     public List<DashboardStatDTO> getStatistics() {
         return dashboardService.getDashboardStats();
+    }
+
+    @GetMapping("/revenue-trend")
+    public List<RevenueTrendDTO> getRevenueTrend(
+            @RequestParam(defaultValue = "30") int days
+    ) {
+        return dashboardService.getRevenueTrend(days);
     }
 }

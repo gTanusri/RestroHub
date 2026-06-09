@@ -25,6 +25,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByBranch_BranchId(Long branchId);
 
+    List<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
 //    List<Order> findByStatus(boolean status);
     
     @Query("SELECT o FROM Order o WHERE o.branch.branchId = :branchId " +
@@ -50,4 +54,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Live Orders Count
     long countByStatusIn(List<OrderStatus> statuses);
+
+    long countByStatusInAndCreatedAtBetween(List<OrderStatus> statuses, LocalDateTime start, LocalDateTime end);
 }

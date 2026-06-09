@@ -12,18 +12,12 @@ import {
 import api from "@services/common/api";
 import { useAdminTheme } from '@context/AdminThemeContext';
 
-// ============================================
-// MAIN COMPONENT (Exported)
-// ============================================
 const RevenueChart = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { isDark } = useAdminTheme();
 
-  // ------------------------------------
-  // FALLBACK DATA
-  // ------------------------------------
   const fallbackData = [
     { day: '1', revenue: 24000 },
     { day: '5', revenue: 32000 },
@@ -34,9 +28,6 @@ const RevenueChart = () => {
     { day: '30', revenue: 45230 },
   ];
 
-  // ------------------------------------
-  // FETCH DATA
-  // ------------------------------------
   useEffect(() => {
     fetchRevenue();
   }, []);
@@ -46,14 +37,13 @@ const RevenueChart = () => {
       setLoading(true);
       setError(null);
 
-      // 🔌 UNCOMMENT WHEN API READY
-      // const response = await api.get('/api/dashboard/revenue?days=30');
-      // setData(response.data);
-
-      // 🎭 MOCK
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setData(fallbackData);
-
+      const response = await api.get('/secure/api/v1/dashboard/revenue-trend?days=30');
+      const trend = response.data.map((point) => ({
+        day: point.day,
+        revenue: Number(point.revenue || 0),
+        orders: point.orders || 0,
+      }));
+      setData(trend);
     } catch (err) {
       console.error('Failed to fetch revenue:', err);
       setError('Failed to load chart');
@@ -63,24 +53,20 @@ const RevenueChart = () => {
     }
   };
 
-  // ------------------------------------
-  // RENDER
-  // ------------------------------------
   return (
     <div className={`rounded-2xl p-6 shadow-sm border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Revenue (30 Days)</h2>
         <button
           onClick={fetchRevenue}
           disabled={loading}
           className={`transition-colors ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
+          title="Refresh revenue"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
-      {/* Chart */}
       <div className="h-64">
         {loading ? (
           <div className={`w-full h-full rounded-xl animate-pulse flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
@@ -105,9 +91,12 @@ const RevenueChart = () => {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#374151' : '#f0f0f0'} />
               <XAxis dataKey="day" stroke={isDark ? '#6b7280' : '#9ca3af'} fontSize={12} />
-              <YAxis stroke={isDark ? '#6b7280' : '#9ca3af'} fontSize={12} tickFormatter={(v) => `₹${v / 1000}k`} />
+              <YAxis stroke={isDark ? '#6b7280' : '#9ca3af'} fontSize={12} tickFormatter={(v) => `Rs ${v / 1000}k`} />
               <Tooltip
-                formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                formatter={(value, name, props) => [
+                  `Rs ${Number(value).toLocaleString()}`,
+                  `Revenue (${props.payload.orders || 0} orders)`
+                ]}
                 contentStyle={{
                   borderRadius: '12px',
                   border: 'none',

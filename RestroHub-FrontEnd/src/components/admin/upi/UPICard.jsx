@@ -7,24 +7,17 @@ import {
   TestTube,
   Star,
   Loader2,
-  MoreVertical,
   ArrowUpRight,
-  ArrowDownRight,
 } from 'lucide-react';
 
 const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => {
   const [deleting, setDeleting] = useState(false);
   const [settingDefault, setSettingDefault] = useState(false);
 
-  // ------------------------------------
-  // HANDLERS
-  // ------------------------------------
   const handleSetDefault = async () => {
     try {
       setSettingDefault(true);
-      // 🔌 await api.put(`/api/upi/${link.id}/default`);
-      await new Promise((r) => setTimeout(r, 400));
-      onSetDefault(link.id);
+      await onSetDefault(link.id);
     } catch (err) {
       console.error('Failed:', err);
     } finally {
@@ -36,9 +29,7 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
     if (!window.confirm(`Delete "${link.name}" UPI link?`)) return;
     try {
       setDeleting(true);
-      // 🔌 await api.delete(`/api/upi/${link.id}`);
-      await new Promise((r) => setTimeout(r, 300));
-      onDelete(link.id);
+      await onDelete(link.id);
     } catch (err) {
       console.error('Failed:', err);
     } finally {
@@ -60,11 +51,7 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
         }
       `}
     >
-      {/* ============================= */}
-      {/* HEADER                        */}
-      {/* ============================= */}
       <div className="border-b border-gray-100 px-4 py-4 sm:px-6 sm:py-5">
-        {/* Default Badge */}
         {link.isDefault && (
           <div className="mb-3 flex items-center gap-2">
             <Star className="h-3.5 w-3.5 text-blue-600 fill-blue-600" />
@@ -81,7 +68,6 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
         )}
 
         <div className="flex items-start justify-between gap-3">
-          {/* Left: Icon + Details */}
           <div className="flex items-center gap-3">
             <div
               className={`
@@ -105,7 +91,6 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
             </div>
           </div>
 
-          {/* Right: Copy Button */}
           <button
             onClick={() => onCopy(link.upiId, link.id)}
             className={`
@@ -128,12 +113,8 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
         </div>
       </div>
 
-      {/* ============================= */}
-      {/* BODY - Stats                  */}
-      {/* ============================= */}
       <div className="px-4 py-4 sm:px-6 sm:py-5">
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {/* Transactions */}
           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-gray-500 sm:text-sm">
@@ -141,7 +122,7 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
               </p>
               <span className="inline-flex items-center gap-0.5 text-xs font-medium text-green-600">
                 <ArrowUpRight className="h-3 w-3" />
-                12%
+                Live
               </span>
             </div>
             <p className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">
@@ -149,7 +130,6 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
             </p>
           </div>
 
-          {/* Revenue */}
           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-gray-500 sm:text-sm">
@@ -157,22 +137,18 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
               </p>
               <span className="inline-flex items-center gap-0.5 text-xs font-medium text-green-600">
                 <ArrowUpRight className="h-3 w-3" />
-                8%
+                Live
               </span>
             </div>
             <p className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">
-              ₹{link.revenue.toLocaleString()}
+              Rs {link.revenue.toLocaleString()}
             </p>
           </div>
         </div>
       </div>
 
-      {/* ============================= */}
-      {/* FOOTER - Actions              */}
-      {/* ============================= */}
       <div className="border-t border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-2">
-          {/* Test Button */}
           <button
             onClick={() => onTest(link)}
             className="
@@ -183,10 +159,9 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
             "
           >
             <TestTube className="h-4 w-4" />
-            Test ₹1
+            Test Rs 1
           </button>
 
-          {/* Set Default */}
           {!link.isDefault && (
             <button
               onClick={handleSetDefault}
@@ -208,7 +183,6 @@ const UPICard = ({ link, onCopy, onSetDefault, onDelete, onTest, copiedId }) => 
             </button>
           )}
 
-          {/* Delete */}
           {!link.isDefault && (
             <button
               onClick={handleDelete}

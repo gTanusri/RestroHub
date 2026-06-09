@@ -9,6 +9,7 @@ const UPILinks = () => {
   const [testingLink, setTestingLink] = useState(null);
   const [showTest, setShowTest] = useState(false);
   const [totalLinks, setTotalLinks] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const openTest = (link) => {
     setTestingLink(link);
@@ -30,11 +31,13 @@ const UPILinks = () => {
       <UPIGrid
         onTest={openTest}
         onCountChange={setTotalLinks}
+        refreshKey={refreshKey}
       />
 
       <UPIFormModal
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
+        onSaved={() => setRefreshKey((key) => key + 1)}
       />
 
       <UPITestModal
