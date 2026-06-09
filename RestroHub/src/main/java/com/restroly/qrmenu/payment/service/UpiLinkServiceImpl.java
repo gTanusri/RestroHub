@@ -1,7 +1,7 @@
 package com.restroly.qrmenu.payment.service;
 
-import com.restroly.qrmenu.common.exception.ResourceAlreadyExistsException;
-import com.restroly.qrmenu.common.exception.ResourceNotFoundException;
+import com.restroly.qrmenu.exception.ResourceAlreadyExistsException;
+import com.restroly.qrmenu.exception.ResourceNotFoundException;
 import com.restroly.qrmenu.payment.dto.UpiLinkRequest;
 import com.restroly.qrmenu.payment.dto.UpiLinkResponse;
 import com.restroly.qrmenu.payment.dto.UpiPaymentLinkRequest;

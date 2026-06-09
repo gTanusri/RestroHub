@@ -6,6 +6,7 @@ import com.restroly.qrmenu.admin.dashboard.dto.RevenueTrendDTO;
 import com.restroly.qrmenu.common.enums.OrderStatus;
 import com.restroly.qrmenu.order.entity.Order;
 import com.restroly.qrmenu.order.repository.OrderRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         BigDecimal todayRevenue = orderRepository.getTodayRevenue(startOfDay, endOfDay);
 
-        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
+        @SuppressWarnings("deprecation") NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
         String formattedRevenue = formatter.format(todayRevenue);
 
         List<OrderStatus> activeStatuses = List.of(
